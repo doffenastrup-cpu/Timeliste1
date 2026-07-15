@@ -205,7 +205,7 @@ body{height:100%; height:100dvh; overflow:hidden; background:var(--bg);
 /* ── OVERSIKT ── */
 .ov-hero{margin:0 16px 12px;background:var(--s1);border:1px solid var(--b1);border-radius:20px;padding:20px;}
 .ov-hero-lbl{font-family:var(--m);font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:var(--t3);margin-bottom:8px;}
-.ov-hero-amt{font-size:26px;font-weight:800;line-height:1;letter-spacing:-0.5px;margin-bottom:4px;}
+.ov-hero-amt{font-size:26px;font-weight:800;line-height:1;letter-spacing:-0.5px;margin-bottom:4px;color:var(--grn);}
 .ov-hero-sub{font-size:12px;color:var(--t3);}
 .ov-pills{display:flex;gap:8px;margin-top:14px;}
 .ov-pill{flex:1;background:var(--s2);border-radius:10px;padding:10px 12px;}
@@ -224,7 +224,8 @@ body{height:100%; height:100dvh; overflow:hidden; background:var(--bg);
 .sc-s{font-size:11px;color:var(--t3);margin-top:4px;}
 
 .lcard{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);margin:0 16px 12px;overflow:hidden;}
-.lcard-hdr{padding:12px 16px;border-bottom:1px solid var(--b2);}
+.lcard-hdr{padding:12px 16px;border-bottom:1px solid var(--b2);display:flex;justify-content:space-between;align-items:center;}
+.lcard-note{font-family:var(--m);font-size:9px;text-transform:uppercase;letter-spacing:0.5px;color:var(--t3);background:var(--s2);padding:3px 8px;border-radius:6px;}
 .lcard-title{font-family:var(--m);font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);}
 .lrow{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--b2);}
 .lrow:last-child{border-bottom:none;}
@@ -284,11 +285,27 @@ textarea.fi{resize:none;min-height:100px;line-height:1.5;}
 /* Picker */
 .overlay-p{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.75);align-items:flex-end;}
 .overlay-p.open{display:flex;}
-.pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:12px 16px;max-height:48vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-.pslot{font-family:var(--m);font-size:13px;padding:11px 4px;text-align:center;
-  border:1px solid var(--b1);border-radius:8px;background:var(--s2);cursor:pointer;color:var(--t1);}
-.pslot:active{border-color:var(--acc);}
-.pslot.sel{background:var(--acc);color:var(--acct);border-color:var(--acc);font-weight:700;}
+
+/* ── Drum-roll picker ── */
+.drum-wrap{width:100%;background:var(--s1);border-radius:20px 20px 0 0;padding-bottom:env(safe-area-inset-bottom,0px);user-select:none;}
+.drum-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 14px;border-bottom:1px solid var(--b1);}
+.drum-title{font-size:15px;font-weight:700;}
+.drum-done{font-size:14px;font-weight:700;color:var(--acc);background:none;border:none;cursor:pointer;padding:4px 8px;}
+.drum-body{display:flex;gap:0;padding:0 16px 20px;}
+.drum-col{flex:1;position:relative;height:216px;overflow:hidden;}
+.drum-col-inner{overflow-y:scroll;height:216px;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.drum-col-inner::-webkit-scrollbar{display:none;}
+.drum-item{height:44px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--m);font-size:20px;font-weight:500;scroll-snap-align:center;
+  color:var(--t3);transition:color 0.1s,font-size 0.1s;}
+.drum-item.sel{color:var(--t1);font-size:22px;font-weight:700;}
+.drum-pad{height:86px;} /* 2 × 43px padding top and bottom for centering */
+.drum-sel-line{position:absolute;top:50%;left:0;right:0;
+  height:44px;transform:translateY(-50%);
+  border-top:1px solid var(--b1);border-bottom:1px solid var(--b1);
+  pointer-events:none;}
+.drum-sep{display:flex;align-items:center;justify-content:center;width:16px;
+  font-family:var(--m);font-size:18px;color:var(--t2);padding-top:0;}
 
 /* Import */
 .import-hint{font-size:11px;color:var(--t3);margin-top:6px;line-height:1.5;}
@@ -393,14 +410,6 @@ textarea.fi{resize:none;min-height:100px;line-height:1.5;}
     </div>
   </div>
 
-  <div class="msum" id="msum-card">
-    <div class="msum-hdr">
-      <span class="msum-lbl">Månedsoversikt</span>
-      <span class="msum-total" id="msum-total"></span>
-    </div>
-    <div class="msum-bars" id="msum-bars"></div>
-  </div>
-
   <div class="miss" id="miss-banner" style="display:none" onclick="scrollMissing()">
     <span style="font-size:18px">⚠️</span>
     <div><div class="miss-txt" id="miss-txt">Mangler timer</div><div class="miss-sub">Trykk for å hoppe til første dag</div></div>
@@ -421,40 +430,41 @@ textarea.fi{resize:none;min-height:100px;line-height:1.5;}
     <div class="mlbl"><div class="mname" id="ov-mname"></div><div class="myear" id="ov-myear"></div></div>
     <button class="mbtn" onclick="chMonth(1)">›</button>
   </div>
+  <!-- Denne måneden -->
   <div class="ov-hero">
-    <div class="ov-hero-lbl">Brutto lønn — <span id="ov-mname2"></span></div>
-    <div class="ov-hero-amt" id="ov-gross">kr 0</div>
-    <div class="ov-hero-sub" id="ov-hrs-sub">0 timer registrert</div>
+    <div class="ov-hero-lbl">Denne måneden — <span id="ov-mname2"></span></div>
+    <div class="ov-hero-amt" id="ov-net">kr 0</div>
+    <div class="ov-hero-sub" id="ov-hrs-sub">0 timer · netto utbetalt</div>
     <div class="ov-pills">
-      <div class="ov-pill"><div class="ov-pill-l">Netto</div><div class="ov-pill-v" id="ov-net" style="color:var(--grn)">kr 0</div></div>
-      <div class="ov-pill"><div class="ov-pill-l">Skatt</div><div class="ov-pill-v" id="ov-tax" style="color:var(--red)">kr 0</div></div>
+      <div class="ov-pill"><div class="ov-pill-l">Brutto</div><div class="ov-pill-v" id="ov-gross">kr 0</div></div>
+      <div class="ov-pill"><div class="ov-pill-l">Skatt (<span id="ov-tax-pct">14</span>%)</div><div class="ov-pill-v" id="ov-tax" style="color:var(--red)">kr 0</div></div>
       <div class="ov-pill"><div class="ov-pill-l">Snitt/uke</div><div class="ov-pill-v" id="ov-avg">0t</div></div>
     </div>
   </div>
+
+  <!-- Hittil i år -->
   <div class="sgrid">
     <div class="scard hi">
-      <div class="sc-l">Etter skatt</div>
-      <div class="sc-v" id="ov-net2">kr 0</div>
-      <div class="sc-s" id="ov-tax-pct2">14% skatt</div>
-    </div>
-    <div class="scard">
-      <div class="sc-l">Skattetrekk</div>
-      <div class="sc-v" id="ov-tax-pct">14%</div>
-      <div class="sc-s">Av brutto</div>
-    </div>
-    <div class="scard full">
-      <div class="sc-l">Hittil i år — totalt</div>
+      <div class="sc-l">Hittil i <span id="ov-ytd-year">2026</span> — netto</div>
       <div class="sc-v" id="ov-ytd-net">kr 0</div>
       <div class="sc-s" id="ov-ytd-sub">0 timer · brutto kr 0</div>
     </div>
+    <div class="scard full">
+      <div class="sc-l">Totalt — alle år</div>
+      <div class="sc-v" id="ov-all-net">kr 0</div>
+      <div class="sc-s" id="ov-all-sub">0 timer · brutto kr 0</div>
+    </div>
   </div>
+
+  <!-- Årsestimat -->
   <div class="lcard">
-    <div class="lcard-hdr"><div class="lcard-title">Progressiv skatteberegning</div></div>
-    <div class="lrow"><span class="lrow-l">Bruttoinntekt (år est.)</span><span class="lrow-v" id="tax-yr-gross">kr 0</span></div>
-    <div class="lrow"><span class="lrow-l">Trinnskatt + trygdeavgift</span><span class="lrow-v neg" id="tax-detail">- kr 0</span></div>
-    <div class="lrow"><span class="lrow-l">Minstefradrag</span><span class="lrow-v pos" id="tax-minstefr">+ kr 0</span></div>
+    <div class="lcard-hdr"><div class="lcard-title">Estimat hele året</div><div class="lcard-note" id="est-basis">basert på 0 mnd</div></div>
+    <div class="lrow"><span class="lrow-l">Snitt brutto / mnd</span><span class="lrow-v" id="est-avg-mo">kr 0</span></div>
+    <div class="lrow"><span class="lrow-l">Estimert brutto år</span><span class="lrow-v" id="tax-yr-gross">kr 0</span></div>
+    <div class="lrow"><span class="lrow-l">Estimert skatt (progressiv)</span><span class="lrow-v neg" id="tax-detail">- kr 0</span></div>
     <div class="lrow" style="border-top:1px solid var(--b1)"><span class="lrow-l" style="font-weight:700">Estimert netto år</span><span class="lrow-v pos" id="tax-yr-net">kr 0</span></div>
   </div>
+
   <div class="lcard">
     <div class="lcard-hdr"><div class="lcard-title">Per måned</div></div>
     <div id="mlist"></div>
@@ -483,8 +493,9 @@ textarea.fi{resize:none;min-height:100px;line-height:1.5;}
   <div class="ss" style="margin-top:6px">
     <div class="ss-title">Eksport</div>
     <div class="slist">
-      <div class="srow" style="cursor:pointer" onclick="shareCSV(true)"><div><div class="srow-l">Del CSV – denne måneden</div><div class="srow-s" id="csv-month-lbl">Februar 2026</div></div><span style="color:var(--t3)">↗</span></div>
-      <div class="srow" style="cursor:pointer" onclick="shareCSV(false)"><div><div class="srow-l">Del CSV – hele året</div><div class="srow-s">Alle måneder</div></div><span style="color:var(--t3)">↗</span></div>
+      <div class="srow" style="cursor:pointer" onclick="shareCSV('week')"><div><div class="srow-l">Del CSV – denne uken</div><div class="srow-s" id="csv-week-lbl">Uke —</div></div><span style="color:var(--t3)">↗</span></div>
+      <div class="srow" style="cursor:pointer" onclick="shareCSV('month')"><div><div class="srow-l">Del CSV – denne måneden</div><div class="srow-s" id="csv-month-lbl">Februar 2026</div></div><span style="color:var(--t3)">↗</span></div>
+      <div class="srow" style="cursor:pointer" onclick="shareCSV('year')"><div><div class="srow-l">Del CSV – hele året</div><div class="srow-s">Alle måneder</div></div><span style="color:var(--t3)">↗</span></div>
     </div>
   </div>
   <div class="ss" style="margin-top:6px">
@@ -498,9 +509,22 @@ textarea.fi{resize:none;min-height:100px;line-height:1.5;}
 
 <!-- ══ PICKER ════════════════════════════════════════════════════════ -->
 <div class="overlay-p" id="picker" onclick="if(event.target===this)closePicker()">
-  <div class="sheet">
-    <div class="sheet-hdr"><span class="sheet-title" id="p-title">Velg tid</span><button class="sheet-close" onclick="closePicker()">Ferdig</button></div>
-    <div class="pgrid" id="pgrid"></div>
+  <div class="drum-wrap">
+    <div class="drum-hdr">
+      <span class="drum-title" id="p-title">Velg tid</span>
+      <button class="drum-done" onclick="confirmPicker()">Ferdig</button>
+    </div>
+    <div class="drum-body">
+      <div class="drum-col" id="drum-h-wrap">
+        <div class="drum-sel-line"></div>
+        <div class="drum-col-inner" id="drum-h"></div>
+      </div>
+      <div class="drum-sep">:</div>
+      <div class="drum-col" id="drum-m-wrap">
+        <div class="drum-sel-line"></div>
+        <div class="drum-col-inner" id="drum-m"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -509,8 +533,10 @@ textarea.fi{resize:none;min-height:100px;line-height:1.5;}
   <div class="sheet">
     <div class="sheet-hdr"><span class="sheet-title">Notat</span><button class="sheet-close" onclick="closeNote()">Lukk</button></div>
     <div class="sheet-body">
-      <div class="fg"><div class="fl">Legg til kommentar for denne dagen</div>
-      <textarea class="fi" id="note-input" placeholder="Overtid, reise, møte hjemmefra..."></textarea></div>
+      <div class="fg">
+        <div class="fl" id="note-prompt-txt">Legg til kommentar for denne dagen</div>
+        <textarea class="fi" id="note-input" placeholder="Overtid, møte, reise, vareleveranse..."></textarea>
+      </div>
       <button class="fbtn" onclick="saveNote()">Lagre notat</button>
     </div>
   </div>
@@ -833,23 +859,8 @@ function renderDots(){
   else sb.style.display='none';
 }
 
-/* ── Month summary bars ──────────────────────────────────────────── */
-function renderMsumBars(){
-  var maxH=0;
-  CW.forEach(function(wk){var h=wkH(wk);if(h>maxH)maxH=h;});
-  var total=mH(CW);
-  document.getElementById('msum-total').textContent=total>0?total.toFixed(1)+'t total':'';
-  var bars=document.getElementById('msum-bars');bars.innerHTML='';
-  CW.forEach(function(wk){
-    var h=wkH(wk);
-    var pct=maxH>0?h/maxH*100:0;
-    bars.innerHTML+='<div class="msum-bar-row">'+
-      '<span class="msum-bar-wk">'+wk.w+'</span>'+
-      '<div class="msum-bar-track"><div class="msum-bar-fill" style="width:'+pct+'%"></div></div>'+
-      '<span class="msum-bar-hrs">'+(h>0?h+'t':'—')+'</span>'+
-      '</div>';
-  });
-}
+/* ── Month summary bars (fjernet — flyttet til Oversikt) ─────────── */
+function renderMsumBars(){}
 
 /* ── Main timer render ───────────────────────────────────────────── */
 function renderTimer(){
@@ -954,29 +965,50 @@ function renderOversikt(){
   document.getElementById('ov-mname').textContent=MN[CM];
   document.getElementById('ov-myear').textContent=CY;
   document.getElementById('ov-mname2').textContent=MN[CM];
-  document.getElementById('ov-tax-pct').textContent=taxPct+'%';
-  document.getElementById('ov-tax-pct2').textContent=taxPct+'% skattetrekk';
+  document.getElementById('ov-tax-pct').textContent=taxPct;
+  document.getElementById('ov-ytd-year').textContent=CY;
 
+  // Denne måneden
   var mh=mH(CW),gross=Math.round(mh*rate),tax=Math.round(gross*taxPct/100),net=gross-tax;
   var wksWithHrs=CW.filter(function(w){return wkH(w)>0;});
   var avg=wksWithHrs.length>0?Math.round(mh/wksWithHrs.length*10)/10:0;
-  document.getElementById('ov-gross').textContent=fmt(gross);
-  document.getElementById('ov-hrs-sub').textContent=mh.toFixed(1)+' timer registrert';
   document.getElementById('ov-net').textContent=fmt(net);
+  document.getElementById('ov-hrs-sub').textContent=mh.toFixed(1)+' timer · netto utbetalt';
+  document.getElementById('ov-gross').textContent=fmt(gross);
   document.getElementById('ov-tax').textContent='- '+fmt(tax);
   document.getElementById('ov-avg').textContent=avg>0?avg+'t':'—';
-  document.getElementById('ov-net2').textContent=fmt(net);
 
-  // YTD
+  // Hittil i år (kun inneværende år, t.o.m. valgt måned)
   var yh=0,yg=0;
-  for(var m=0;m<=CM;m++){var w=m===CM?CW:load(CY,m);var h=mH(w),g=Math.round(h*rate);yh=Math.round((yh+h)*10)/10;yg+=g;}
+  for(var m=0;m<=CM;m++){var w=m===CM?CW:load(CY,m);var h=mH(w);yh=Math.round((yh+h)*10)/10;yg+=Math.round(h*rate);}
   var yn=yg-Math.round(yg*taxPct/100);
-  document.getElementById('ov-ytd-net').textContent=fmt(yn)+' netto';
+  document.getElementById('ov-ytd-net').textContent=fmt(yn);
   document.getElementById('ov-ytd-sub').textContent=yh.toFixed(1)+'t · brutto '+fmt(yg);
 
-  // Progressive tax estimate (Norwegian 2025 rates)
-  var yrGross=gross*12;
-  var minstefr=Math.min(yrGross*0.46,109950);// minstefradrag
+  // Totalt alle år (scanner alle lagrede måneder)
+  var allH=0,allG=0;
+  for(var k=0;k<localStorage.length;k++){
+    var key=localStorage.key(k);
+    if(key&&key.indexOf('tl_d_')===0){
+      try{var wks=JSON.parse(localStorage.getItem(key));var h2=mH(wks);allH=Math.round((allH+h2)*10)/10;allG+=Math.round(h2*rate);}catch(e){}
+    }
+  }
+  var allN=allG-Math.round(allG*taxPct/100);
+  document.getElementById('ov-all-net').textContent=fmt(allN);
+  document.getElementById('ov-all-sub').textContent=allH.toFixed(1)+'t · brutto '+fmt(allG);
+
+  // Årsestimat — snitt av JOBBEDE måneder × 12 (ikke denne mnd × 12)
+  var moGross=[];
+  for(var m2=0;m2<12;m2++){var w2=m2===CM?CW:load(CY,m2);var hh=mH(w2);if(hh>0)moGross.push(Math.round(hh*rate));}
+  var nMo=moGross.length;
+  var avgMoGross=nMo>0?Math.round(moGross.reduce(function(a,b){return a+b;},0)/nMo):0;
+  var yrGross=avgMoGross*12;
+  document.getElementById('est-basis').textContent='snitt av '+nMo+' '+(nMo===1?'mnd':'mnd');
+  document.getElementById('est-avg-mo').textContent=fmt(avgMoGross);
+  document.getElementById('tax-yr-gross').textContent=fmt(yrGross);
+
+  // Progressiv skatt (norske 2025-satser)
+  var minstefr=Math.min(yrGross*0.46,109950);
   var trygd=yrGross*0.078;
   var trinnskatt=0;
   if(yrGross>217400)trinnskatt+=(Math.min(yrGross,306050)-217400)*0.017;
@@ -986,18 +1018,16 @@ function renderOversikt(){
   var almSkatt=Math.max(0,(yrGross-minstefr-54750))*0.22;
   var totalTax=trygd+trinnskatt+almSkatt;
   var yrNet=yrGross-totalTax;
-  document.getElementById('tax-yr-gross').textContent=fmt(yrGross);
-  document.getElementById('tax-detail').textContent='- '+fmt(trygd+trinnskatt+almSkatt);
-  document.getElementById('tax-minstefr').textContent='+ '+fmt(minstefr);
+  document.getElementById('tax-detail').textContent='- '+fmt(totalTax);
   document.getElementById('tax-yr-net').textContent=fmt(yrNet);
 
-  // Month list
+  // Per måned
   var ml=document.getElementById('mlist');ml.innerHTML='';
-  var items=[];for(var i=0;i<=CM;i++){var ww=i===CM?CW:load(CY,i);var hh=mH(ww),gg=Math.round(hh*rate);items.push({m:i,h:hh,g:gg});}
+  var items=[];for(var i=0;i<=CM;i++){var ww=i===CM?CW:load(CY,i);var hh2=mH(ww),gg=Math.round(hh2*rate);items.push({m:i,h:hh2,g:gg});}
   items.slice().reverse().forEach(function(it){
     var t=Math.round(it.g*taxPct/100),n=it.g-t,ic=it.m===CM;
     var d=document.createElement('div');d.className='mitem'+(ic?' cur':'');
-    d.onclick=function(){CM=it.m;CW=load(CY,it.m);renderAll();showTab('timer');};
+    d.onclick=function(){CM=it.m;CW=load(CY,it.m);ss('lastMonth',CM);renderAll();showTab('timer');};
     d.innerHTML='<span class="mitem-n'+(ic?' cur':'')+'">'+MN[it.m]+'</span>'+
       '<div class="mitem-r"><div class="mitem-pay">'+fmt(n)+' netto</div>'+
       '<div class="mitem-hrs">'+it.h.toFixed(1)+'t · brutto '+fmt(it.g)+'</div></div>';
@@ -1017,25 +1047,83 @@ function applySettings(){
 
 /* ── Picker ──────────────────────────────────────────────────────── */
 var pWi,pDi,pKey,printMo=[];
-var SLOTS=[];for(var h=5;h<=23;h++){SLOTS.push(pad2(h)+':00');if(h<23)SLOTS.push(pad2(h)+':30');}
+var DRUM_H=[],DRUM_M=[];
+for(var _h=5;_h<=23;_h++)DRUM_H.push(pad2(_h));
+for(var _m=0;_m<60;_m+=5)DRUM_M.push(pad2(_m));
+
+function buildDrumCol(colId,items,selVal){
+  var col=document.getElementById(colId);
+  col.innerHTML='<div class="drum-pad"></div>';
+  items.forEach(function(v){
+    var d=document.createElement('div');
+    d.className='drum-item'+(v===selVal?' sel':'');
+    d.textContent=v;col.appendChild(d);
+  });
+  col.innerHTML+='<div class="drum-pad"></div>';
+}
+function drumScrollTo(colId,items,val,instant){
+  var col=document.getElementById(colId);
+  var idx=items.indexOf(val);if(idx<0)idx=0;
+  var target=idx*44; // 44px per item
+  col.scrollTo({top:target,behavior:instant?'instant':'smooth'});
+}
+function drumHighlight(colId,items){
+  var col=document.getElementById(colId);
+  var idx=Math.round(col.scrollTop/44);
+  idx=Math.max(0,Math.min(items.length-1,idx));
+  col.querySelectorAll('.drum-item').forEach(function(el,i){
+    el.classList.toggle('sel',i===idx);
+  });
+}
+function drumRead(colId,items){
+  var col=document.getElementById(colId);
+  var idx=Math.round(col.scrollTop/44);
+  return items[Math.max(0,Math.min(items.length-1,idx))];
+}
+
 function openPicker(wi,di,k){
   pWi=wi;pDi=di;pKey=k;
   var cur=CW[wi].d[di][k]||null;
+  var curH=cur?cur.split(':')[0]:'09';
+  var curM=cur?pad2(Math.round(parseInt(cur.split(':')[1])/5)*5):'00';
+  if(parseInt(curM)>=60)curM='55';
   document.getElementById('p-title').textContent=DN[di]+' — '+(k==='i'?'Inn':'Ut');
-  var g=document.getElementById('pgrid');g.innerHTML='';
-  SLOTS.forEach(function(t){
-    var b=document.createElement('button');b.className='pslot'+(t===cur?' sel':'');
-    b.textContent=t;b.onclick=function(){selTime(t);};g.appendChild(b);
-  });
+
+  buildDrumCol('drum-h',DRUM_H,curH);
+  buildDrumCol('drum-m',DRUM_M,curM);
+
   document.getElementById('picker').classList.add('open');
-  setTimeout(function(){var s=g.querySelector('.sel');if(s)s.scrollIntoView({block:'center',behavior:'instant'});
-    else{var sl=g.querySelectorAll('.pslot');for(var i=0;i<sl.length;i++){if(sl[i].textContent==='09:00'){sl[i].scrollIntoView({block:'center',behavior:'instant'});break;}}}},60);
+
+  // Scroll to selection after paint
+  setTimeout(function(){
+    drumScrollTo('drum-h',DRUM_H,curH,true);
+    drumScrollTo('drum-m',DRUM_M,curM,true);
+  },40);
+
+  // Highlight on scroll
+  var dh=document.getElementById('drum-h'),dm=document.getElementById('drum-m');
+  dh.onscroll=function(){drumHighlight('drum-h',DRUM_H);};
+  dm.onscroll=function(){drumHighlight('drum-m',DRUM_M);};
 }
-function selTime(t){
+function confirmPicker(){
+  var h=drumRead('drum-h',DRUM_H),m=drumRead('drum-m',DRUM_M);
+  var t=h+':'+m;
   pushUndo(DN[pDi]+' '+(pKey==='i'?'inn':'ut')+' '+t);
   setTime(pWi,pDi,pKey,t);
-  document.querySelectorAll('.pslot').forEach(function(b){b.classList.toggle('sel',b.textContent===t);});
-  setTimeout(closePicker,180);
+  closePicker();
+  // Prompt notat if day hours > 3 after setting ut-tid
+  if(pKey==='u'){
+    var day=CW[pWi].d[pDi];
+    var hrs=ch(day.i,day.u);
+    if(hrs>3&&!day.note){
+      setTimeout(function(){
+        noteEditWi=pWi;noteEditDi=pDi;
+        document.getElementById('note-input').value='';
+        document.getElementById('note-sheet').classList.add('open');
+        document.getElementById('note-prompt-txt').textContent=hrs.toFixed(1)+'t registrert — legg til notat?';
+      },300);
+    }
+  }
 }
 function closePicker(){document.getElementById('picker').classList.remove('open');}
 
@@ -1083,28 +1171,96 @@ function confirmImp(){
 }
 
 /* ── CSV export via Web Share ────────────────────────────────────── */
-function shareCSV(mo){
-  var rate=gs('rate',210);
-  var months=mo?[CM]:[];
-  if(!mo){for(var i=0;i<=CM;i++)months.push(i);}
-  var rows=['\uFEFFMåned,Uke,Man,Tir,Ons,Tor,Fre,Lør,Timer,Lønn,Notat'];
-  months.forEach(function(m){
-    var wks=m===CM?CW:load(CY,m);
-    var mh=mH(wks),mg=Math.round(mh*rate);
-    wks.forEach(function(wk){
-      var wh=wkH(wk),g=Math.round(wh*rate);
-      var cells=wk.d.map(function(d){
-        if(d.o||(!d.i&&!d.u))return'Fri';
-        return d.i+'-'+d.u+' ('+ch(d.i,d.u)+'t)';
-      });
-      var notes=wk.d.map(function(d){return d.note||'';}).join(' / ').replace(/\s*\/\s*(?=\s*\/|$)/g,'').trim();
-      rows.push([MN[m],'Uke '+wk.w].concat(cells).concat([wh.toFixed(1),'kr '+g,notes]).join(','));
+function dateForCell(y,m,weekNo,dayIdx){
+  var n=new Date(y,m+1,0).getDate();
+  for(var d=1;d<=n;d++){
+    var dt=new Date(y,m,d);
+    var wd=(dt.getDay()+6)%7;
+    if(wd===dayIdx&&gwn(dt)===weekNo)return dt;
+  }
+  return null;
+}
+function csvDayRows(wks,m,rate){
+  var rows=[],totH=0,totG=0;
+  wks.forEach(function(wk){
+    wk.d.forEach(function(d,di){
+      if(d.o||!d.i||!d.u)return;
+      var h=ch(d.i,d.u);if(h<=0)return;
+      var g=Math.round(h*rate);
+      totH+=h;totG+=g;
+      var dt=dateForCell(CY,m,wk.w,di);
+      var datoStr=dt?pad2(dt.getDate())+'.'+pad2(m+1)+'.'+CY:'';
+      rows.push([datoStr,DN[di],d.i,d.u,h.toFixed(1),'kr '+g,csvCell(d.note||'')].join(','));
     });
-    rows.push([MN[m],'TOTALT','','','','','','',mh.toFixed(1),'kr '+mg,''].join(','));
-    rows.push('');
   });
+  return{rows:rows,h:Math.round(totH*10)/10,g:totG};
+}
+function shareCSV(mode){
+  var rate=gs('rate',210),taxPct=gs('tax',14),name=gs('name','')||'';
+  var rows=['\uFEFFTimeliste'];
+  if(name)rows.push('Navn:,'+csvCell(name));
+  rows.push('Timesats:,kr '+rate+'/t');
+  var fname='Timeliste.csv';
+
+  if(mode==='week'){
+    // Finn nåværende uke i CW
+    var curWn=CW.length>0?CW[CW.length-1].w:gwn(new Date());
+    // Finn riktig uke-objekt (velg siste med data, eller siste)
+    var wkObj=CW[CW.length-1];
+    for(var i=CW.length-1;i>=0;i--){if(wkH(CW[i])>0){wkObj=CW[i];break;}}
+    var wn=wkObj.w;
+    rows.push('Periode:,Uke '+wn+' — '+MN[CM]+' '+CY);
+    rows.push('');
+    rows.push('Dato,Dag,Inn,Ut,Timer,Beløp,Notat');
+    var wH=0,wG=0;
+    wkObj.d.forEach(function(d,di){
+      if(d.o||!d.i||!d.u)return;
+      var h=ch(d.i,d.u);if(h<=0)return;
+      var g=Math.round(h*rate);wH+=h;wG+=g;
+      var dt=dateForCell(CY,CM,wn,di);
+      var datoStr=dt?pad2(dt.getDate())+'.'+pad2(CM+1)+'.'+CY:'';
+      rows.push([datoStr,DN[di],d.i,d.u,h.toFixed(1),'kr '+g,csvCell(d.note||'')].join(','));
+    });
+    wH=Math.round(wH*10)/10;
+    rows.push('');
+    rows.push(['SUM Uke '+wn,'','','',wH.toFixed(1)+'t','kr '+wG,''].join(','));
+    fname='Timeliste_Uke'+wn+'_'+CY+'.csv';
+
+  } else if(mode==='month'){
+    rows.push('Periode:,'+MN[CM]+' '+CY);
+    rows.push('');
+    rows.push('Dato,Dag,Inn,Ut,Timer,Beløp,Notat');
+    var res=csvDayRows(CW,CM,rate);
+    res.rows.forEach(function(r){rows.push(r);});
+    rows.push('');
+    rows.push(['SUM '+MN[CM],'','','',res.h.toFixed(1)+'t','kr '+res.g,''].join(','));
+    fname='Timeliste_'+MN[CM]+'_'+CY+'.csv';
+
+  } else { // year
+    rows.push('Periode:,Hele '+CY);
+    rows.push('');
+    rows.push('Dato,Dag,Inn,Ut,Timer,Beløp,Notat');
+    var grandH=0,grandG=0;
+    for(var m=0;m<=CM;m++){
+      var wks=m===CM?CW:load(CY,m);
+      var r=csvDayRows(wks,m,rate);
+      if(r.h>0){
+        r.rows.forEach(function(row){rows.push(row);});
+        rows.push('');
+        rows.push(['SUM '+MN[m],'','','',r.h.toFixed(1)+'t','kr '+r.g,''].join(','));
+        rows.push('');
+        grandH+=r.h;grandG+=r.g;
+      }
+    }
+    grandH=Math.round(grandH*10)/10;
+    var tax=Math.round(grandG*taxPct/100);
+    rows.push(['TOTALT '+CY,'','','',grandH.toFixed(1)+'t','kr '+grandG,''].join(','));
+    rows.push(['Skattetrekk ('+taxPct+'%)','','','','','- kr '+tax,''].join(','));
+    rows.push(['Netto utbetalt','','','','','kr '+(grandG-tax),''].join(','));
+    fname='Timeliste_'+CY+'.csv';
+  }
+
   var csv=rows.join('\n');
-  var fname=mo?'Timeliste_'+MN[CM]+'_'+CY+'.csv':'Timeliste_'+CY+'.csv';
   if(navigator.canShare){
     var file=new File([csv],fname,{type:'text/csv'});
     if(navigator.canShare({files:[file]})){navigator.share({files:[file],title:fname}).catch(function(){});return;}
@@ -1113,6 +1269,7 @@ function shareCSV(mo){
   var url=URL.createObjectURL(blob);
   var a=document.createElement('a');a.href=url;a.download=fname;a.click();URL.revokeObjectURL(url);
 }
+function csvCell(s){s=String(s);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
 
 /* ── Onboarding ──────────────────────────────────────────────────── */
 var obPreset={inn:'09:00',ut:'16:00'};
