@@ -1049,7 +1049,7 @@ function applySettings(){
 var pWi,pDi,pKey,printMo=[];
 var DRUM_H=[],DRUM_M=[];
 for(var _h=5;_h<=23;_h++)DRUM_H.push(pad2(_h));
-for(var _m=0;_m<60;_m+=5)DRUM_M.push(pad2(_m));
+for(var _m=0;_m<60;_m+=1)DRUM_M.push(pad2(_m));
 
 function buildDrumCol(colId,items,selVal){
   var col=document.getElementById(colId);
@@ -1085,8 +1085,7 @@ function openPicker(wi,di,k){
   pWi=wi;pDi=di;pKey=k;
   var cur=CW[wi].d[di][k]||null;
   var curH=cur?cur.split(':')[0]:'09';
-  var curM=cur?pad2(Math.round(parseInt(cur.split(':')[1])/5)*5):'00';
-  if(parseInt(curM)>=60)curM='55';
+  var curM=cur?pad2(parseInt(cur.split(':')[1])):'00';
   document.getElementById('p-title').textContent=DN[di]+' — '+(k==='i'?'Inn':'Ut');
 
   buildDrumCol('drum-h',DRUM_H,curH);
