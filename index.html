@@ -499,8 +499,10 @@ textarea.fi{resize:none;min-height:100px;line-height:1.5;}
     <div class="ss-title">Eksport</div>
     <div class="slist">
       <div class="srow" style="cursor:pointer" onclick="shareCSV('week')"><div><div class="srow-l">Del CSV – denne uken</div><div class="srow-s" id="csv-week-lbl">Uke —</div></div><span style="color:var(--t3)">↗</span></div>
-      <div class="srow" style="cursor:pointer" onclick="shareCSV('month')"><div><div class="srow-l">Del CSV – denne måneden</div><div class="srow-s" id="csv-month-lbl">Februar 2026</div></div><span style="color:var(--t3)">↗</span></div>
+      <div class="srow" style="cursor:pointer" onclick="shareCSV('month')"><div><div class="srow-l">Del CSV – denne måneden</div><div class="srow-s" id="csv-month-lbl">—</div></div><span style="color:var(--t3)">↗</span></div>
       <div class="srow" style="cursor:pointer" onclick="shareCSV('year')"><div><div class="srow-l">Del CSV – hele året</div><div class="srow-s">Alle måneder</div></div><span style="color:var(--t3)">↗</span></div>
+      <div class="srow" style="cursor:pointer;border-top:2px solid var(--b1);margin-top:4px" onclick="printPDF('week')"><div><div class="srow-l">PDF – denne uken</div><div class="srow-s">Klar til utskrift / del</div></div><span style="color:var(--acc)">PDF</span></div>
+      <div class="srow" style="cursor:pointer" onclick="printPDF('month')"><div><div class="srow-l">PDF – denne måneden</div><div class="srow-s">Klar til utskrift / del</div></div><span style="color:var(--acc)">PDF</span></div>
     </div>
   </div>
   <div class="ss" style="margin-top:6px">
@@ -976,6 +978,19 @@ document.addEventListener('touchend',function(){if(_lpTimer){clearTimeout(_lpTim
 document.addEventListener('touchmove',function(){if(_lpTimer){clearTimeout(_lpTimer);_lpTimer=null;}},true);
 function toggleOff(wi,di){
   var d=CW[wi].d[di];
+  // Hvis dagen har tider — tøm bare tidene, ikke sett fri
+  if(!d.o&&(d.i||d.u)){
+    pushUndo(DN[di]+' tømt');
+    CW[wi].d[di]={};
+    save();renderTimer();return;
+  }
+  // Søndagen sykler bare mellom fri og aktiv (ingen ferie/syk)
+  if(di===6){
+    if(!d.o){pushUndo('Søn fri');CW[wi].d[di]={o:1,otype:'off'};}
+    else{pushUndo('Søn aktivert');CW[wi].d[di]={};}
+    save();renderTimer();return;
+  }
+  // Vanlig toggle: aktiv → fri → ferie → syk → aktiv
   if(!d.o){pushUndo(DN[di]+' fri');CW[wi].d[di]={o:1,otype:'off'};}
   else if(d.otype==='off'){pushUndo(DN[di]+' ferie');CW[wi].d[di]={o:1,otype:'vacation'};}
   else if(d.otype==='vacation'){pushUndo(DN[di]+' syk');CW[wi].d[di]={o:1,otype:'sick'};}
@@ -1211,6 +1226,91 @@ function confirmImp(){
 }
 
 /* ── Backup / Restore ────────────────────────────────────────────── */
+/* ── PDF via window.print ────────────────────────────────────────── */
+function printPDF(mode){
+  var rate=gs('rate',210),taxPct=gs('tax',14),name=gs('name','')||'Christopher';
+  var rows=[];
+  var title='',grandH=0,grandG=0,period='';
+
+  if(mode==='week'){
+    var wkObj=CW[CW.length-1];
+    for(var i=CW.length-1;i>=0;i--){if(wkH(CW[i])>0){wkObj=CW[i];break;}}
+    var wn=wkObj.w;
+    title='Timeliste — Uke '+wn;period='Uke '+wn+', '+MN[CM]+' '+CY;
+    wkObj.d.forEach(function(d,di){
+      if(d.o||!d.i||!d.u)return;
+      var h=ch(d.i,d.u);if(h<=0)return;
+      var isSun=di===6,baseG=Math.round(h*rate),totalG=isSun?baseG*2:baseG;
+      grandH+=h;grandG+=totalG;
+      var dt=dateForCell(CY,CM,wn,di);
+      var dato=dt?pad2(dt.getDate())+'.'+pad2(CM+1)+'.'+CY:'';
+      rows.push({dato:dato,dag:DN[di],inn:d.i,ut:d.u,h:h,g:baseG,note:d.note||'',sun:isSun});
+      if(isSun)rows.push({tillegg:true,g:baseG});
+    });
+  } else {
+    title='Timeliste — '+MN[CM]+' '+CY;period=MN[CM]+' '+CY;
+    CW.forEach(function(wk){
+      wk.d.forEach(function(d,di){
+        if(d.o||!d.i||!d.u)return;
+        var h=ch(d.i,d.u);if(h<=0)return;
+        var isSun=di===6,baseG=Math.round(h*rate),totalG=isSun?baseG*2:baseG;
+        grandH+=h;grandG+=totalG;
+        var dt=dateForCell(CY,CM,wk.w,di);
+        var dato=dt?pad2(dt.getDate())+'.'+pad2(CM+1)+'.'+CY:'';
+        rows.push({dato:dato,dag:DN[di],inn:d.i,ut:d.u,h:h,g:baseG,note:d.note||'',sun:isSun});
+        if(isSun)rows.push({tillegg:true,g:baseG});
+      });
+    });
+  }
+  grandH=Math.round(grandH*10)/10;
+  var tax=Math.round(grandG*taxPct/100),net=grandG-tax;
+
+  var tableRows=rows.map(function(r){
+    if(r.tillegg)return '<tr class="sun-row"><td colspan="5" style="padding-left:24px;font-style:italic;color:#7c4dff;">Søndagstillegg 100%</td><td>kr '+r.g+'</td><td></td></tr>';
+    return '<tr'+(r.sun?' class="sun-row"':'')+'>'
+      +'<td>'+r.dato+'</td><td>'+(r.sun?'<b>'+r.dag+'</b>':r.dag)+'</td>'
+      +'<td>'+r.inn+'</td><td>'+r.ut+'</td><td>'+r.h.toFixed(1)+'t</td>'
+      +'<td>kr '+r.g+'</td><td class="note">'+r.note+'</td></tr>';
+  }).join('');
+
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+title+'</title><style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:-apple-system,Helvetica,Arial,sans-serif;font-size:13px;color:#111;padding:32px;}'
+    +'.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:16px;border-bottom:2px solid #111;}'
+    +'.hdr h1{font-size:22px;font-weight:800;letter-spacing:-0.5px;}'
+    +'.hdr p{font-size:12px;color:#555;margin-top:4px;}'
+    +'.hdr-r{text-align:right;font-size:12px;color:#555;line-height:1.8;}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:20px;}'
+    +'th{background:#111;color:#fff;text-align:left;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;}'
+    +'td{padding:8px 10px;border-bottom:1px solid #e5e5e5;}'
+    +'.note{color:#666;font-size:11px;}'
+    +'.sun-row td{background:#f3f0ff;}'
+    +'.sum-row td{font-weight:700;border-top:2px solid #111;background:#f7f7f7;}'
+    +'.totals{border:1px solid #ddd;border-radius:8px;overflow:hidden;margin-top:4px;}'
+    +'.trow{display:flex;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #eee;}'
+    +'.trow:last-child{border:none;background:#111;color:#fff;font-weight:700;font-size:14px;}'
+    +'.trow.tax{color:#c00;}'
+    +'@media print{@page{margin:14mm;}}'
+    +'</style></head><body>'
+    +'<div class="hdr"><div><h1>Timeliste</h1><p>'+period+'</p></div>'
+    +'<div class="hdr-r"><b>'+name+'</b><br>Timesats: kr '+rate+'/t<br>Skattetrekk: '+taxPct+'%</div></div>'
+    +'<table><thead><tr><th>Dato</th><th>Dag</th><th>Inn</th><th>Ut</th><th>Timer</th><th>Beløp</th><th>Notat</th></tr></thead>'
+    +'<tbody>'+tableRows+'</tbody>'
+    +'<tfoot><tr class="sum-row"><td colspan="4">Totalt</td><td>'+grandH.toFixed(1)+'t</td><td>kr '+grandG+'</td><td></td></tr></tfoot>'
+    +'</table>'
+    +'<div class="totals">'
+    +'<div class="trow"><span>Brutto</span><span>kr '+grandG+'</span></div>'
+    +'<div class="trow tax"><span>Skattetrekk ('+taxPct+'%)</span><span>− kr '+tax+'</span></div>'
+    +'<div class="trow"><span>Netto utbetalt</span><span>kr '+net+'</span></div>'
+    +'</div></body></html>';
+
+  var win=window.open('','_blank');
+  if(!win){toast('Tillat popup for PDF');return;}
+  win.document.write(html);
+  win.document.close();
+  win.onload=function(){win.focus();win.print();};
+}
+
 function exportBackup(){
   var data={};
   for(var i=0;i<localStorage.length;i++){
