@@ -518,6 +518,12 @@ textarea.fi{resize:none;min-height:100px;line-height:1.5;}
       <div class="srow" style="cursor:pointer" onclick="clearMonth()"><div><div class="srow-l" style="color:var(--red)">Tøm denne måneden</div><div class="srow-s">Kan ikke angres</div></div><span>🗑</span></div>
     </div>
   </div>
+  <div class="ss" style="margin-top:6px">
+    <div class="ss-title">App</div>
+    <div class="slist">
+      <div class="srow" style="cursor:pointer" onclick="checkUpdate()"><div><div class="srow-l">Se etter oppdatering</div><div class="srow-s" id="ver-lbl">Versjon <span id="ver-num"></span></div></div><span id="upd-spin" style="color:var(--acc)">↻</span></div>
+    </div>
+  </div>
 </div>
 
 <!-- ══ PICKER ════════════════════════════════════════════════════════ -->
@@ -581,6 +587,7 @@ textarea.fi{resize:none;min-height:100px;line-height:1.5;}
 
 <script>
 const MN=['Januar','Februar','Mars','April','Mai','Juni','Juli','August','September','Oktober','November','Desember'];
+var APP_VERSION='v27';
 const DN=['Man','Tir','Ons','Tor','Fre','Lør','Søn'];
 const DNLONG=['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'];
 const NOW=new Date();
@@ -638,7 +645,22 @@ function todayPos(){
   return null;
 }
 
-/* ── Default data ────────────────────────────────────────────────── */
+/* ── Migrasjon: legg til søndag (di=6) i gamle 6-dagers uker ──────── */
+function migrateAddSunday(){
+  for(var i=0;i<localStorage.length;i++){
+    var key=localStorage.key(i);
+    if(!key||key.indexOf('tl_d_')!==0)continue;
+    try{
+      var wks=JSON.parse(localStorage.getItem(key));
+      var changed=false;
+      wks.forEach(function(wk){
+        if(wk.d&&wk.d.length===6){wk.d.push({o:1});changed=true;}
+      });
+      if(changed)localStorage.setItem(key,JSON.stringify(wks));
+    }catch(e){}
+  }
+}
+migrateAddSunday();
 function defWeeks(y,m){
   if(y===2026&&m===0)return[
     {w:1,c:0,d:[{o:1},{o:1},{o:1},{o:1},{i:'09:00',u:'11:30'},{o:1},{o:1}]},
@@ -1355,6 +1377,27 @@ function finishOnboard(){
 }
 
 /* ── renderAll ───────────────────────────────────────────────────── */
+/* ── Oppdateringssjekk ───────────────────────────────────────────── */
+function checkUpdate(){
+  var spin=document.getElementById('upd-spin');
+  var lbl=document.getElementById('ver-lbl');
+  spin.textContent='⏳';
+  fetch(window.location.href,{cache:'no-store'})
+    .then(function(r){return r.text();})
+    .then(function(html){
+      var m=html.match(/APP_VERSION='([^']+)'/);
+      var remote=m?m[1]:null;
+      if(!remote){spin.textContent='↻';toast('Kunne ikke sjekke versjon');return;}
+      if(remote===APP_VERSION){spin.textContent='✓';toast('Appen er oppdatert ('+APP_VERSION+')');}
+      else{
+        spin.textContent='↻';
+        toast('Ny versjon tilgjengelig — laster inn…');
+        setTimeout(function(){window.location.reload(true);},1200);
+      }
+    })
+    .catch(function(){spin.textContent='↻';toast('Ingen nettforbindelse');});
+}
+
 function renderAll(){renderTimer();renderOversikt();applySettings();}
 
 /* ── Init ────────────────────────────────────────────────────────── */
@@ -1365,24 +1408,12 @@ function renderAll(){renderTimer();renderOversikt();applySettings();}
 CW=load(CY,CM);
 if(!gs('onboarded',0)){document.getElementById('onboard').style.display='flex';}
 applySettings();renderAll();
+var _vn=document.getElementById('ver-num');if(_vn)_vn.textContent=APP_VERSION;
 // Live timer auto-start if already checked in
 setTimeout(function(){
   var p=todayPos();
   if(p&&CW[p.wi]&&CW[p.wi].d[p.di].i&&!CW[p.wi].d[p.di].u)startLiveTimer();
 },500);
-
-if('serviceWorker'in navigator){
-  navigator.serviceWorker.register('./sw.js').then(function(reg){
-    reg.addEventListener('updatefound',function(){
-      var nw=reg.installing;
-      nw.addEventListener('statechange',function(){
-        if(nw.state==='installed'&&navigator.serviceWorker.controller){
-          window.location.reload();
-        }
-      });
-    });
-  }).catch(function(){});
-}
 </script>
 </body>
 </html>
