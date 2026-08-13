@@ -18,6 +18,7 @@
   --grn:#3ecf8e;--grn2:rgba(62,207,142,0.12);
   --red:#f26b6b;--red2:rgba(242,107,107,0.12);
   --org:#f5a623;--org2:rgba(245,166,35,0.12);
+  --sun:#c084fc;--sun2:rgba(192,132,252,0.12);
   --blu:#5b8fff;--blu2:rgba(91,143,255,0.12);
   --safe-top:env(safe-area-inset-top,44px);
   --safe-bottom:env(safe-area-inset-bottom,0px);
@@ -174,6 +175,10 @@ body{height:100%; height:100dvh; overflow:hidden; background:var(--bg);
 .miss-dot{width:6px;height:6px;border-radius:50%;background:var(--org);flex-shrink:0;}
 .dname{font-family:var(--m);font-size:12px;font-weight:500;width:30px;flex-shrink:0;color:var(--t2);}
 .dname.we{color:var(--org);}
+.dname.sun{color:var(--sun);font-weight:700;}
+.drow.sun-r{background:var(--sun2);}
+.sun-badge{font-size:9px;font-weight:800;background:var(--sun);color:#fff;
+  padding:2px 6px;border-radius:6px;flex-shrink:0;letter-spacing:0.3px;}
 .tgroup{flex:1;display:flex;align-items:center;gap:5px;}
 .tsep{color:var(--t3);font-size:12px;}
 .tbtn{font-family:var(--m);font-size:13px;font-weight:500;
@@ -568,8 +573,8 @@ textarea.fi{resize:none;min-height:100px;line-height:1.5;}
 
 <script>
 const MN=['Januar','Februar','Mars','April','Mai','Juni','Juli','August','September','Oktober','November','Desember'];
-const DN=['Man','Tir','Ons','Tor','Fre','Lør'];
-const DNLONG=['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+const DN=['Man','Tir','Ons','Tor','Fre','Lør','Søn'];
+const DNLONG=['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'];
 const NOW=new Date();
 let CY=gs('lastYear',NOW.getFullYear()),CM=gs('lastMonth',NOW.getMonth()),undoStack=[],CW=[];
 let liveTimerInterval=null;
@@ -610,14 +615,17 @@ function mH(wks){return Math.round(wks.reduce(function(s,w){return s+wkH(w);},0)
 function fmt(n){return 'kr '+Math.round(n).toLocaleString('no-NO');}
 function pad2(n){return String(n).padStart(2,'0');}
 function padTime(d){return pad2(d.getHours())+':'+pad2(d.getMinutes());}
+function dayRate(di,baseRate){return di===6?baseRate*2:baseRate;}
+function wkPay(wk,rate){return Math.round(wk.d.reduce(function(s,d,di){return s+(d.o?0:Math.round(ch(d.i,d.u)*dayRate(di,rate)));},0));}
+function mPay(wks,rate){return wks.reduce(function(s,wk){return s+wkPay(wk,rate);},0);}
 function rndHalf(t){var p=t.split(':'),h=parseInt(p[0]),m=parseInt(p[1]);m=m<15?0:m<45?30:60;if(m===60){h++;m=0;}return pad2(h)+':'+pad2(m);}
 
 /* ── Today helpers ───────────────────────────────────────────────── */
 function isCM(){return NOW.getFullYear()===CY&&NOW.getMonth()===CM;}
-function todayDow(){var d=NOW.getDay();return d===0?-1:d-1;}
+function todayDow(){var d=NOW.getDay();return d===0?6:d-1;}
 function todayPos(){
   if(!isCM())return null;
-  var wn=gwn(NOW),di=todayDow();if(di<0||di>5)return null;
+  var wn=gwn(NOW),di=todayDow();if(di<0||di>6)return null;
   for(var i=0;i<CW.length;i++){if(CW[i].w===wn)return{wi:i,di:di};}
   return null;
 }
@@ -625,19 +633,19 @@ function todayPos(){
 /* ── Default data ────────────────────────────────────────────────── */
 function defWeeks(y,m){
   if(y===2026&&m===0)return[
-    {w:1,c:0,d:[{o:1},{o:1},{o:1},{o:1},{i:'09:00',u:'11:30'},{o:1}]},
-    {w:2,c:0,d:[{i:'09:00',u:'14:00'},{i:'09:00',u:'16:00'},{o:1},{i:'08:00',u:'16:30'},{i:'08:00',u:'16:00'},{o:1}]},
-    {w:3,c:0,d:[{i:'09:00',u:'16:30'},{i:'09:00',u:'16:00'},{i:'09:00',u:'18:00'},{i:'09:00',u:'15:30'},{i:'09:00',u:'15:30'},{o:1}]},
-    {w:4,c:0,d:[{i:'09:00',u:'16:30'},{i:'09:00',u:'16:00'},{o:1},{i:'09:00',u:'16:00'},{i:'09:00',u:'16:00'},{i:'08:30',u:'16:00'}]},
-    {w:5,c:0,d:[{i:'09:00',u:'16:30'},{i:'09:00',u:'16:00'},{o:1},{i:'09:00',u:'17:30'},{i:'09:00',u:'17:30'},{i:'06:00',u:'11:00'}]}
+    {w:1,c:0,d:[{o:1},{o:1},{o:1},{o:1},{i:'09:00',u:'11:30'},{o:1},{o:1}]},
+    {w:2,c:0,d:[{i:'09:00',u:'14:00'},{i:'09:00',u:'16:00'},{o:1},{i:'08:00',u:'16:30'},{i:'08:00',u:'16:00'},{o:1},{o:1}]},
+    {w:3,c:0,d:[{i:'09:00',u:'16:30'},{i:'09:00',u:'16:00'},{i:'09:00',u:'18:00'},{i:'09:00',u:'15:30'},{i:'09:00',u:'15:30'},{o:1},{o:1}]},
+    {w:4,c:0,d:[{i:'09:00',u:'16:30'},{i:'09:00',u:'16:00'},{o:1},{i:'09:00',u:'16:00'},{i:'09:00',u:'16:00'},{i:'08:30',u:'16:00'},{o:1}]},
+    {w:5,c:0,d:[{i:'09:00',u:'16:30'},{i:'09:00',u:'16:00'},{o:1},{i:'09:00',u:'17:30'},{i:'09:00',u:'17:30'},{i:'06:00',u:'11:00'},{o:1}]}
   ];
   if(y===2026&&m===1)return[
-    {w:6,c:0,d:[{i:'09:00',u:'16:00'},{i:'09:00',u:'15:30'},{o:1},{i:'09:00',u:'16:00'},{i:'09:00',u:'17:00'},{i:'07:00',u:'11:00'}]},
-    {w:7,c:0,d:[{i:'09:00',u:'16:00'},{i:'09:00',u:'16:30'},{o:1},{i:'09:00',u:'15:30'},{i:'09:00',u:'17:00'},{i:'07:30',u:'11:00'}]},
-    {w:8,c:0,d:[{i:'09:00',u:'15:30'},{i:'09:00',u:'18:00'},{o:1},{i:'09:00',u:'16:30'},{i:'09:00',u:'17:00'},{i:'07:30',u:'11:00'}]},
-    {w:9,c:0,d:[{i:'09:00',u:'16:00'},{i:'09:00',u:'16:00'},{o:1},{},{},{}]}
+    {w:6,c:0,d:[{i:'09:00',u:'16:00'},{i:'09:00',u:'15:30'},{o:1},{i:'09:00',u:'16:00'},{i:'09:00',u:'17:00'},{i:'07:00',u:'11:00'},{o:1}]},
+    {w:7,c:0,d:[{i:'09:00',u:'16:00'},{i:'09:00',u:'16:30'},{o:1},{i:'09:00',u:'15:30'},{i:'09:00',u:'17:00'},{i:'07:30',u:'11:00'},{o:1}]},
+    {w:8,c:0,d:[{i:'09:00',u:'15:30'},{i:'09:00',u:'18:00'},{o:1},{i:'09:00',u:'16:30'},{i:'09:00',u:'17:00'},{i:'07:30',u:'11:00'},{o:1}]},
+    {w:9,c:0,d:[{i:'09:00',u:'16:00'},{i:'09:00',u:'16:00'},{o:1},{},{},{},{o:1}]}
   ];
-  return getMW(y,m).map(function(wn){return{w:wn,c:0,d:[{},{},{o:1},{},{},{o:1}]};});
+  return getMW(y,m).map(function(wn){return{w:wn,c:0,d:[{},{},{o:1},{},{},{o:1},{o:1}]};});
 }
 
 /* ── Check in/out ────────────────────────────────────────────────── */
@@ -885,23 +893,24 @@ function renderTimer(){
     var el=document.createElement('div');
     el.className='wblock'+(wk.c?' coll':'');el.id='wb-'+wi;
     var dh=wk.d.map(function(day,di){
-      var we=di===5,h=day.o?0:ch(day.i,day.u);
-      // Calculate actual date for this row
+      var we=di===5,sun=di===6,h=day.o?0:ch(day.i,day.u);
       var fd=getFirstDow(CY,CM,wk.w);
       var rowDate=new Date(fd);rowDate.setDate(rowDate.getDate()+di);
       var dateStr=rowDate.getMonth()===CM?rowDate.getDate()+'.':'';
       var isOT=!day.o&&h>0&&h>gs('normalday',7.5);
       var im=mk[wi+'-'+di],it=tp&&tp.wi===wi&&tp.di===di;
       var hasNote=day.note&&day.note.length>0;
+      var dPay=h>0?Math.round(h*dayRate(di,rate)):0;
       if(day.o)return '<div class="drow off-r'+(it?' today-r':'')+'">'+
         (it?'<span class="today-pill">i dag</span>':'')+
-        '<div class="dname-wrap"><span class="dname'+(we?' we':'')+'">'+DN[di]+'</span><span class="ddate">'+dateStr+'</span></div>'+
+        '<div class="dname-wrap"><span class="dname'+(sun?' sun':we?' we':'')+'">'+DN[di]+'</span><span class="ddate">'+dateStr+'</span></div>'+
         '<span style="flex:1;font-size:12px;color:var(--t3)">'+(day.otype==='vacation'?'🏖 Ferie':day.otype==='sick'?'🤒 Syk':'Fri')+'</span>'+
         '<button class="xbtn" onclick="toggleOff('+wi+','+di+')">+</button></div>';
       var showSay=!day.i&&!day.u&&(wi>0||di>0);
-      return '<div class="drow'+(it?' today-r':im?' miss-r':'')+'">'+(it?'<span class="today-pill">i dag</span>':'')+
-        (im&&!it?'<span class="miss-dot"></span>':'')+
-        '<div class="dname-wrap"><span class="dname'+(we?' we':'')+'">'+DN[di]+'</span><span class="ddate">'+dateStr+'</span></div>'+
+      return '<div class="drow'+(sun?' sun-r':it?' today-r':im?' miss-r':'')+'">'+(it?'<span class="today-pill">i dag</span>':'')+
+        (sun&&h>0?'<span class="sun-badge">+100%</span>':'')+
+        (im&&!it&&!sun?'<span class="miss-dot"></span>':'')+
+        '<div class="dname-wrap"><span class="dname'+(sun?' sun':we?' we':'')+'">'+DN[di]+'</span><span class="ddate">'+dateStr+'</span></div>'+
         '<div class="tgroup">'+
           '<button class="tbtn'+(day.i?'':' emp')+(im?' miss-b':'')+'" onclick="openPicker('+wi+','+di+',\'i\')">'+(day.i||'Inn')+'</button>'+
           '<span class="tsep">–</span>'+
@@ -909,14 +918,16 @@ function renderTimer(){
         '</div>'+
         (showSay?'<button class="saybtn" onclick="sameAsYesterday('+wi+','+di+')">= i går</button>':'')+
         '<span class="dhrs'+(h>0?'':' emp')+(isOT?' ot':'')+'">'+(h>0?h+'t':'—')+'</span>'+
+        (sun&&h>0?'<span class="dhrs" style="color:var(--sun);font-size:11px;">'+fmt(dPay)+'</span>':'')+
         '<span class="note-badge'+(hasNote?' has':'')+'" onclick="openNote('+wi+','+di+')" title="'+(hasNote?day.note:'Legg til notat')+'">📝</span>'+
         '<button class="xbtn" onclick="toggleOff('+wi+','+di+')">✕</button></div>';
     }).join('');
+    var wPay=Math.round(wk.d.reduce(function(s,d,di){return s+(d.o?0:Math.round(ch(d.i,d.u)*dayRate(di,rate)));},0));
     el.innerHTML='<div class="wblock-hdr" id="wbh-'+wi+'" onclick="toggleWk('+wi+')" oncontextmenu="event.preventDefault();deleteWk('+wi+')">'+
       '<span class="wblock-title">Uke '+wk.w+'</span>'+
       '<div class="wblock-right">'+
         '<button class="copy-btn" onclick="copyWk(event,'+wi+')">Kopier forrige</button>'+
-        '<span class="wblock-hrs"><b>'+(wh>0?wh.toFixed(1)+'t':'—')+'</b>'+(wh>0?' · '+fmt(wh*rate):'')+'</span>'+
+        '<span class="wblock-hrs"><b>'+(wh>0?wh.toFixed(1)+'t':'—')+'</b>'+(wPay>0?' · '+fmt(wPay):'')+'</span>'+
         '<span class="wchev">▾</span>'+
       '</div></div>'+
       '<div class="wbody">'+dh+'</div>';
@@ -942,7 +953,7 @@ function toggleOff(wi,di){
   save();renderTimer();
 }
 function setTime(wi,di,k,v){CW[wi].d[di][k]=v;save();renderTimer();}
-function addWeek(){var l=CW.length>0?CW[CW.length-1].w:gwn(new Date(CY,CM,1))-1;CW.push({w:l+1,c:0,d:[{},{},{o:1},{},{},{o:1}]});save();renderTimer();}
+function addWeek(){var l=CW.length>0?CW[CW.length-1].w:gwn(new Date(CY,CM,1))-1;CW.push({w:l+1,c:0,d:[{},{},{o:1},{},{},{o:1},{o:1}]});save();renderTimer();}
 function copyMonthPattern(){
   var nextM=CM+1,nextY=CY;
   if(nextM>11){nextM=0;nextY++;}
@@ -980,7 +991,7 @@ function renderOversikt(){
 
   // Hittil i år (kun inneværende år, t.o.m. valgt måned)
   var yh=0,yg=0;
-  for(var m=0;m<=CM;m++){var w=m===CM?CW:load(CY,m);var h=mH(w);yh=Math.round((yh+h)*10)/10;yg+=Math.round(h*rate);}
+  for(var m=0;m<=CM;m++){var w=m===CM?CW:load(CY,m);var h=mH(w);yh=Math.round((yh+h)*10)/10;yg+=mPay(w,rate);}
   var yn=yg-Math.round(yg*taxPct/100);
   document.getElementById('ov-ytd-net').textContent=fmt(yn);
   document.getElementById('ov-ytd-sub').textContent=yh.toFixed(1)+'t · brutto '+fmt(yg);
@@ -990,7 +1001,7 @@ function renderOversikt(){
   for(var k=0;k<localStorage.length;k++){
     var key=localStorage.key(k);
     if(key&&key.indexOf('tl_d_')===0){
-      try{var wks=JSON.parse(localStorage.getItem(key));var h2=mH(wks);allH=Math.round((allH+h2)*10)/10;allG+=Math.round(h2*rate);}catch(e){}
+      try{var wks=JSON.parse(localStorage.getItem(key));var h2=mH(wks);allH=Math.round((allH+h2)*10)/10;allG+=mPay(wks,rate);}catch(e){}
     }
   }
   var allN=allG-Math.round(allG*taxPct/100);
@@ -1185,11 +1196,18 @@ function csvDayRows(wks,m,rate){
     wk.d.forEach(function(d,di){
       if(d.o||!d.i||!d.u)return;
       var h=ch(d.i,d.u);if(h<=0)return;
-      var g=Math.round(h*rate);
-      totH+=h;totG+=g;
+      var baseG=Math.round(h*rate);
+      var isSun=di===6;
+      var totalG=isSun?baseG*2:baseG;
+      totH+=h;totG+=totalG;
       var dt=dateForCell(CY,m,wk.w,di);
       var datoStr=dt?pad2(dt.getDate())+'.'+pad2(m+1)+'.'+CY:'';
-      rows.push([datoStr,DN[di],d.i,d.u,h.toFixed(1),'kr '+g,csvCell(d.note||'')].join(','));
+      if(isSun){
+        rows.push([datoStr,DN[di],d.i,d.u,h.toFixed(1),'kr '+baseG,'Grunnlønn'+csvCell(d.note?(' — '+d.note):'')].join(','));
+        rows.push(['','','','','','kr '+baseG,'Søndagstillegg 100%'].join(','));
+      } else {
+        rows.push([datoStr,DN[di],d.i,d.u,h.toFixed(1),'kr '+totalG,csvCell(d.note||'')].join(','));
+      }
     });
   });
   return{rows:rows,h:Math.round(totH*10)/10,g:totG};
