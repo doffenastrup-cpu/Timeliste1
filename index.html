@@ -504,6 +504,14 @@ textarea.fi{resize:none;min-height:100px;line-height:1.5;}
     </div>
   </div>
   <div class="ss" style="margin-top:6px">
+    <div class="ss-title">Sikkerhetskopi</div>
+    <div class="slist">
+      <div class="srow" style="cursor:pointer" onclick="exportBackup()"><div><div class="srow-l">Last ned sikkerhetskopi</div><div class="srow-s">Alle timer som JSON-fil</div></div><span style="color:var(--t3)">↓</span></div>
+      <div class="srow" style="cursor:pointer" onclick="document.getElementById('restore-input').click()"><div><div class="srow-l">Gjenopprett fra sikkerhetskopi</div><div class="srow-s">Importer JSON-fil</div></div><span style="color:var(--t3)">↑</span></div>
+      <input type="file" id="restore-input" accept=".json" style="display:none" onchange="importBackup(this)">
+    </div>
+  </div>
+  <div class="ss" style="margin-top:6px">
     <div class="ss-title">Farlig sone</div>
     <div class="slist">
       <div class="srow" style="cursor:pointer" onclick="copyMonthPattern()"><div><div class="srow-l">Kopier månedsmønster</div><div class="srow-s">Kopier til neste måned</div></div><span>→</span></div>
@@ -828,7 +836,7 @@ function renderCI(){
     bInn.style.display='block';bInn.className='ci-btn done';bInn.textContent='✓ Inne '+d.i;
     bUt.style.display='block';bUt.className='ci-btn done';bUt.textContent='✓ Ute '+d.u;
     liveEl.style.display='none';stopLiveTimer();
-    if(h>0){payE.style.display='inline-flex';payE.textContent=h+'t · '+fmt(h*rate);}
+    if(h>0){var tp2=todayPos();var di2=tp2?tp2.di:0;payE.style.display='inline-flex';payE.textContent=h+'t · '+fmt(h*dayRate(di2,rate));}
     quickBtn.style.display='none';
     footerL.textContent=d.note||'';
   }
@@ -980,7 +988,7 @@ function renderOversikt(){
   document.getElementById('ov-ytd-year').textContent=CY;
 
   // Denne måneden
-  var mh=mH(CW),gross=Math.round(mh*rate),tax=Math.round(gross*taxPct/100),net=gross-tax;
+  var mh=mH(CW),gross=mPay(CW,rate),tax=Math.round(gross*taxPct/100),net=gross-tax;
   var wksWithHrs=CW.filter(function(w){return wkH(w)>0;});
   var avg=wksWithHrs.length>0?Math.round(mh/wksWithHrs.length*10)/10:0;
   document.getElementById('ov-net').textContent=fmt(net);
@@ -1010,7 +1018,7 @@ function renderOversikt(){
 
   // Årsestimat — snitt av JOBBEDE måneder × 12 (ikke denne mnd × 12)
   var moGross=[];
-  for(var m2=0;m2<12;m2++){var w2=m2===CM?CW:load(CY,m2);var hh=mH(w2);if(hh>0)moGross.push(Math.round(hh*rate));}
+  for(var m2=0;m2<12;m2++){var w2=m2===CM?CW:load(CY,m2);var hh=mH(w2);if(hh>0)moGross.push(mPay(w2,rate));}
   var nMo=moGross.length;
   var avgMoGross=nMo>0?Math.round(moGross.reduce(function(a,b){return a+b;},0)/nMo):0;
   var yrGross=avgMoGross*12;
@@ -1034,7 +1042,7 @@ function renderOversikt(){
 
   // Per måned
   var ml=document.getElementById('mlist');ml.innerHTML='';
-  var items=[];for(var i=0;i<=CM;i++){var ww=i===CM?CW:load(CY,i);var hh2=mH(ww),gg=Math.round(hh2*rate);items.push({m:i,h:hh2,g:gg});}
+  var items=[];for(var i=0;i<=CM;i++){var ww=i===CM?CW:load(CY,i);var hh2=mH(ww),gg=mPay(ww,rate);items.push({m:i,h:hh2,g:gg});}
   items.slice().reverse().forEach(function(it){
     var t=Math.round(it.g*taxPct/100),n=it.g-t,ic=it.m===CM;
     var d=document.createElement('div');d.className='mitem'+(ic?' cur':'');
@@ -1180,7 +1188,40 @@ function confirmImp(){
   impParsed=[];document.getElementById('imp-txt').value='';document.getElementById('imp-preview').innerHTML='';document.getElementById('imp-btn').style.display='none';
 }
 
-/* ── CSV export via Web Share ────────────────────────────────────── */
+/* ── Backup / Restore ────────────────────────────────────────────── */
+function exportBackup(){
+  var data={};
+  for(var i=0;i<localStorage.length;i++){
+    var k=localStorage.key(i);
+    if(k&&k.indexOf('tl_')===0)data[k]=localStorage.getItem(k);
+  }
+  var json=JSON.stringify(data,null,2);
+  var blob=new Blob([json],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  var d=new Date();
+  a.href=url;a.download='timeliste_backup_'+d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate())+'.json';
+  a.click();URL.revokeObjectURL(url);
+  toast('Sikkerhetskopi lastet ned');
+}
+function importBackup(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=JSON.parse(e.target.result);
+      var count=0;
+      Object.keys(data).forEach(function(k){
+        if(k.indexOf('tl_')===0){localStorage.setItem(k,data[k]);count++;}
+      });
+      CW=load(CY,CM);
+      renderAll();
+      toast('Gjenopprettet '+count+' oppføringer ✓');
+    }catch(err){toast('Feil: ugyldig fil');}
+    input.value='';
+  };
+  reader.readAsText(file);
+}
 function dateForCell(y,m,weekNo,dayIdx){
   var n=new Date(y,m+1,0).getDate();
   for(var d=1;d<=n;d++){
@@ -1233,10 +1274,18 @@ function shareCSV(mode){
     wkObj.d.forEach(function(d,di){
       if(d.o||!d.i||!d.u)return;
       var h=ch(d.i,d.u);if(h<=0)return;
-      var g=Math.round(h*rate);wH+=h;wG+=g;
+      var isSun=di===6;
+      var baseG=Math.round(h*rate);
+      var totalG=isSun?baseG*2:baseG;
+      wH+=h;wG+=totalG;
       var dt=dateForCell(CY,CM,wn,di);
       var datoStr=dt?pad2(dt.getDate())+'.'+pad2(CM+1)+'.'+CY:'';
-      rows.push([datoStr,DN[di],d.i,d.u,h.toFixed(1),'kr '+g,csvCell(d.note||'')].join(','));
+      if(isSun){
+        rows.push([datoStr,DN[di],d.i,d.u,h.toFixed(1),'kr '+baseG,'Grunnlønn'+csvCell(d.note?(' — '+d.note):'')].join(','));
+        rows.push(['','','','','','kr '+baseG,'Søndagstillegg 100%'].join(','));
+      } else {
+        rows.push([datoStr,DN[di],d.i,d.u,h.toFixed(1),'kr '+totalG,csvCell(d.note||'')].join(','));
+      }
     });
     wH=Math.round(wH*10)/10;
     rows.push('');
@@ -1321,8 +1370,35 @@ setTimeout(function(){
   var p=todayPos();
   if(p&&CW[p.wi]&&CW[p.wi].d[p.di].i&&!CW[p.wi].d[p.di].u)startLiveTimer();
 },500);
-var swc='self.addEventListener("install",function(){self.skipWaiting()});self.addEventListener("activate",function(){self.clients.claim()})';
-if('serviceWorker'in navigator)navigator.serviceWorker.register(URL.createObjectURL(new Blob([swc],{type:'application/javascript'}))).catch(function(){});
+
+// Service Worker med versjonskontroll — øk V ved hver opplasting
+var SW_VERSION='v26';
+if('serviceWorker'in navigator){
+  var swCode=[
+    'var V="'+SW_VERSION+'";',
+    'self.addEventListener("install",function(e){',
+    '  e.waitUntil(caches.keys().then(function(keys){',
+    '    return Promise.all(keys.filter(function(k){return k!==V;}).map(function(k){return caches.delete(k);}));',
+    '  }).then(function(){return self.skipWaiting();}));',
+    '});',
+    'self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim());});',
+    'self.addEventListener("fetch",function(e){',
+    '  if(e.request.mode==="navigate"){',
+    '    e.respondWith(fetch(e.request,{cache:"no-store"}).catch(function(){return caches.match(e.request);}));',
+    '  }',
+    '});'
+  ].join('');
+  var swBlob=new Blob([swCode],{type:'application/javascript'});
+  var swUrl=URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl).then(function(reg){
+    reg.addEventListener('updatefound',function(){
+      var nw=reg.installing;
+      nw.addEventListener('statechange',function(){
+        if(nw.state==='activated')window.location.reload();
+      });
+    });
+  }).catch(function(){});
+}
 </script>
 </body>
 </html>
