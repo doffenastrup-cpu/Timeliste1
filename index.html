@@ -312,6 +312,30 @@ textarea.fi{resize:none;min-height:100px;line-height:1.5;}
 .drum-sep{display:flex;align-items:center;justify-content:center;width:16px;
   font-family:var(--m);font-size:18px;color:var(--t2);padding-top:0;}
 
+/* ── Økonomi ──────────────────────────────────────────────────────── */
+.ok-hero{background:linear-gradient(135deg,var(--s2) 0%,#1a1f35 100%);
+  border:1px solid var(--b1);border-radius:20px;margin:0 16px 12px;padding:24px 20px;text-align:center;}
+.ok-hero-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:8px;}
+.ok-hero-days{display:flex;align-items:baseline;justify-content:center;gap:6px;margin-bottom:4px;}
+.ok-hero-days span:first-child{font-family:var(--m);font-size:52px;font-weight:800;color:var(--acc);line-height:1;letter-spacing:-2px;}
+.ok-days-lbl{font-size:14px;color:var(--t2);font-weight:500;}
+.ok-hero-date{font-size:12px;color:var(--t3);margin-bottom:10px;}
+.ok-hero-amount{display:inline-block;background:var(--grn2);color:var(--grn);font-family:var(--m);font-size:13px;font-weight:700;padding:5px 14px;border-radius:20px;}
+.ok-exp-row{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--b2);}
+.ok-exp-name{flex:1;font-size:14px;color:var(--t1);}
+.ok-exp-amt{font-family:var(--m);font-size:13px;color:var(--t2);margin-right:4px;}
+.ok-exp-del{background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:2px 6px;border-radius:6px;}
+.ok-exp-del:active{color:var(--red);}
+.ok-goal{padding:12px 16px;border-bottom:1px solid var(--b2);}
+.ok-goal-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.ok-goal-name{font-size:14px;font-weight:600;}
+.ok-goal-meta{font-family:var(--m);font-size:11px;color:var(--t3);}
+.ok-goal-del{background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:2px 6px;}
+.ok-progress{height:6px;background:var(--s3);border-radius:100px;overflow:hidden;}
+.ok-progress-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--acc),var(--grn));transition:width 0.6s cubic-bezier(0.34,1.56,0.64,1);}
+.ok-goal-sub{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--t3);}
+.ok-add-btn{width:100%;padding:10px;background:var(--s2);border:1px dashed var(--b1);border-radius:10px;color:var(--acc);font-size:13px;font-weight:600;cursor:pointer;}
+.ok-add-btn:active{background:var(--acc2);}
 /* Import */
 .import-hint{font-size:11px;color:var(--t3);margin-top:6px;line-height:1.5;}
 .ip-item{display:flex;justify-content:space-between;align-items:center;
@@ -477,7 +501,73 @@ textarea.fi{resize:none;min-height:100px;line-height:1.5;}
 </div>
 
 <!-- ══ INNSTILLINGER ════════════════════════════════════════════════════ -->
-<div class="screen" id="screen-settings">
+<!-- ══ ØKONOMI ══════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-okonomi">
+  <div class="ph">
+    <div class="ph-inner">
+      <div class="ph-eye" id="ok-eye">Økonomi</div>
+      <div class="ph-title">Personlig økonomi</div>
+    </div>
+  </div>
+  <div class="scontent">
+
+    <!-- LØNNSDAG HERO -->
+    <div class="ok-hero">
+      <div class="ok-hero-label">Neste lønnsdag</div>
+      <div class="ok-hero-days"><span id="ok-days">—</span><span class="ok-days-lbl">dager</span></div>
+      <div class="ok-hero-date" id="ok-paydate">—</div>
+      <div class="ok-hero-amount" id="ok-expected">Forventer kr —</div>
+    </div>
+
+    <!-- MÅNEDSSTATUS -->
+    <div class="lcard" style="margin-top:0">
+      <div class="lcard-hdr"><div class="lcard-title">Denne måneden</div></div>
+      <div class="lrow"><span class="lrow-l">Forventet lønn</span><span class="lrow-v" id="ok-income">kr 0</span></div>
+      <div class="lrow"><span class="lrow-l">Faste utgifter</span><span class="lrow-v neg" id="ok-fixed">− kr 0</span></div>
+      <div class="lrow"><span class="lrow-l">Foreldre</span><span class="lrow-v pos">+ kr 5 000</span></div>
+      <div class="lrow" style="border-top:1px solid var(--b1)"><span class="lrow-l" style="font-weight:700">Til overs</span><span class="lrow-v pos" id="ok-left" style="font-weight:700">kr 0</span></div>
+    </div>
+
+    <!-- FASTE UTGIFTER -->
+    <div class="lcard">
+      <div class="lcard-hdr">
+        <div class="lcard-title">Faste utgifter</div>
+        <div class="lcard-note" id="ok-fixed-total">kr 0/mnd</div>
+      </div>
+      <div id="ok-expenses-list"></div>
+      <div style="padding:10px 16px">
+        <button class="ok-add-btn" onclick="okAddExpense()">+ Legg til utgift</button>
+      </div>
+    </div>
+
+    <!-- SPAREMÅL -->
+    <div class="lcard">
+      <div class="lcard-hdr"><div class="lcard-title">Sparemål</div></div>
+      <div id="ok-goals-list"></div>
+      <div style="padding:10px 16px">
+        <button class="ok-add-btn" onclick="okAddGoal()">+ Nytt sparemål</button>
+      </div>
+    </div>
+
+    <!-- LØNNSDAG INNSTILLINGER -->
+    <div class="lcard">
+      <div class="lcard-hdr"><div class="lcard-title">Lønnsinnstillinger</div></div>
+      <div class="lrow">
+        <span class="lrow-l">Lønnsdag (dato i mnd)</span>
+        <input type="number" id="ok-payday-input" min="1" max="28" placeholder="12"
+          style="width:60px;text-align:right;font-family:var(--m);font-size:14px;border:1px solid var(--b1);background:var(--s2);border-radius:8px;padding:6px 10px;outline:none;color:var(--acc)"
+          onchange="okSavePayday(this.value)">
+      </div>
+      <div class="lrow">
+        <span class="lrow-l">Ekstra månedsinntekt</span>
+        <input type="number" id="ok-extra-input" placeholder="5000"
+          style="width:90px;text-align:right;font-family:var(--m);font-size:14px;border:1px solid var(--b1);background:var(--s2);border-radius:8px;padding:6px 10px;outline:none;color:var(--acc)"
+          onchange="okSaveExtra(this.value)">
+      </div>
+    </div>
+
+  </div>
+</div>
   <div class="ph"><div class="ph-left"><div class="ph-eye">Din profil</div><div class="ph-title">Innstillinger</div></div></div>
   <div class="ss">
     <div class="ss-title">Lønn</div>
@@ -583,6 +673,7 @@ textarea.fi{resize:none;min-height:100px;line-height:1.5;}
 <div class="tabs">
   <button class="tab active" id="tab-timer" onclick="showTab('timer')"><span class="ticon">⏱</span><span>Timer</span></button>
   <button class="tab" id="tab-oversikt" onclick="showTab('oversikt')"><span class="ticon">◎</span><span>Oversikt</span></button>
+  <button class="tab" id="tab-okonomi" onclick="showTab('okonomi')"><span class="ticon" style="font-family:var(--m);font-size:11px;font-weight:700">kr</span><span>Økonomi</span></button>
   <button class="tab" id="tab-settings" onclick="showTab('settings')"><span class="ticon">◈</span><span>Innstillinger</span></button>
 </div>
 </div>
@@ -613,11 +704,12 @@ function undo(){if(!undoStack.length)return;var p=undoStack.pop();CW=JSON.parse(
 
 /* ── Tabs ────────────────────────────────────────────────────────── */
 function showTab(n){
-  ['timer','oversikt','settings'].forEach(function(t){
+  ['timer','oversikt','okonomi','settings'].forEach(function(t){
     document.getElementById('screen-'+t).classList.toggle('active',t===n);
     document.getElementById('tab-'+t).classList.toggle('active',t===n);
   });
   if(n==='oversikt')renderOversikt();
+  if(n==='okonomi')renderOkonomi();
 }
 
 /* ── Month ───────────────────────────────────────────────────────── */
@@ -940,7 +1032,6 @@ function renderTimer(){
         '<button class="xbtn" onclick="toggleOff('+wi+','+di+')">+</button></div>';
       var showSay=!day.i&&!day.u&&(wi>0||di>0);
       return '<div class="drow'+(sun?' sun-r':it?' today-r':im?' miss-r':'')+'">'+(it?'<span class="today-pill">i dag</span>':'')+
-        (sun&&h>0?'<span class="sun-badge">+100%</span>':'')+
         (im&&!it&&!sun?'<span class="miss-dot"></span>':'')+
         '<div class="dname-wrap"><span class="dname'+(sun?' sun':we?' we':'')+'">'+DN[di]+'</span><span class="ddate">'+dateStr+'</span></div>'+
         '<div class="tgroup">'+
@@ -1276,6 +1367,10 @@ function printPDF(mode){
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+title+'</title><style>'
     +'*{box-sizing:border-box;margin:0;padding:0}'
     +'body{font-family:-apple-system,Helvetica,Arial,sans-serif;font-size:13px;color:#111;padding:32px;}'
+    +'.toolbar{display:flex;gap:10px;margin-bottom:24px;}'
+    +'.tbtn{padding:10px 20px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;}'
+    +'.tbtn.print{background:#111;color:#fff;}'
+    +'.tbtn.close{background:#eee;color:#111;}'
     +'.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:16px;border-bottom:2px solid #111;}'
     +'.hdr h1{font-size:22px;font-weight:800;letter-spacing:-0.5px;}'
     +'.hdr p{font-size:12px;color:#555;margin-top:4px;}'
@@ -1289,26 +1384,26 @@ function printPDF(mode){
     +'.totals{border:1px solid #ddd;border-radius:8px;overflow:hidden;margin-top:4px;}'
     +'.trow{display:flex;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #eee;}'
     +'.trow:last-child{border:none;background:#111;color:#fff;font-weight:700;font-size:14px;}'
-    +'.trow.tax{color:#c00;}'
-    +'@media print{@page{margin:14mm;}}'
+    +'@media print{.toolbar{display:none;}@page{margin:14mm;}}'
     +'</style></head><body>'
+    +'<div class="toolbar">'
+    +'<button class="tbtn print" onclick="window.print()">Skriv ut / Del som PDF</button>'
+    +'<button class="tbtn close" onclick="window.close()">← Tilbake</button>'
+    +'</div>'
     +'<div class="hdr"><div><h1>Timeliste</h1><p>'+period+'</p></div>'
-    +'<div class="hdr-r"><b>'+name+'</b><br>Timesats: kr '+rate+'/t<br>Skattetrekk: '+taxPct+'%</div></div>'
+    +'<div class="hdr-r"><b>'+name+'</b><br>Timesats: kr '+rate+'/t</div></div>'
     +'<table><thead><tr><th>Dato</th><th>Dag</th><th>Inn</th><th>Ut</th><th>Timer</th><th>Beløp</th><th>Notat</th></tr></thead>'
     +'<tbody>'+tableRows+'</tbody>'
     +'<tfoot><tr class="sum-row"><td colspan="4">Totalt</td><td>'+grandH.toFixed(1)+'t</td><td>kr '+grandG+'</td><td></td></tr></tfoot>'
     +'</table>'
     +'<div class="totals">'
-    +'<div class="trow"><span>Brutto</span><span>kr '+grandG+'</span></div>'
-    +'<div class="trow tax"><span>Skattetrekk ('+taxPct+'%)</span><span>− kr '+tax+'</span></div>'
-    +'<div class="trow"><span>Netto utbetalt</span><span>kr '+net+'</span></div>'
+    +'<div class="trow"><span>Brutto lønn</span><span>kr '+grandG+'</span></div>'
     +'</div></body></html>';
 
   var win=window.open('','_blank');
   if(!win){toast('Tillat popup for PDF');return;}
   win.document.write(html);
   win.document.close();
-  win.onload=function(){win.focus();win.print();};
 }
 
 function exportBackup(){
@@ -1496,6 +1591,127 @@ function checkUpdate(){
       }
     })
     .catch(function(){spin.textContent='↻';toast('Ingen nettforbindelse');});
+}
+
+/* ── Økonomi ─────────────────────────────────────────────────────── */
+var OK_DEFAULTS=[
+  {name:'Strøm',amt:350},{name:'Felleskostnader',amt:2579},
+  {name:'Mat',amt:4500},{name:'Lån',amt:5000},
+  {name:'Forsikring',amt:200},{name:'Ruter',amt:338}
+];
+function okLoad(k,d){try{var v=localStorage.getItem('ok_'+k);return v!==null?JSON.parse(v):d;}catch(e){return d;}}
+function okSave(k,v){localStorage.setItem('ok_'+k,JSON.stringify(v));}
+function okSavePayday(v){var n=parseInt(v);if(n>=1&&n<=28){okSave('payday',n);renderOkonomi();}}
+function okSaveExtra(v){okSave('extra',parseInt(v)||0);renderOkonomi();}
+
+function okNextPayday(){
+  var day=okLoad('payday',12);
+  var now=new Date(),y=now.getFullYear(),m=now.getMonth();
+  var next=new Date(y,m,day);
+  if(next<=now)next=new Date(y,m+1,day);
+  return next;
+}
+
+function okAddExpense(){
+  var name=prompt('Navn på utgift (feks Spotify):');
+  if(!name)return;
+  var amt=parseInt(prompt('Beløp per måned (kr):'));
+  if(!amt||amt<=0)return;
+  var list=okLoad('expenses',OK_DEFAULTS);
+  list.push({name:name,amt:amt});
+  okSave('expenses',list);renderOkonomi();
+}
+function okDelExpense(i){
+  var list=okLoad('expenses',OK_DEFAULTS);
+  list.splice(i,1);okSave('expenses',list);renderOkonomi();
+}
+function okAddGoal(){
+  var name=prompt('Hva sparer du til?');
+  if(!name)return;
+  var target=parseInt(prompt('Målbeløp (kr):'));
+  if(!target||target<=0)return;
+  var saved=parseInt(prompt('Allerede spart (kr, 0 hvis ingenting):'))||0;
+  var goals=okLoad('goals',[]);
+  goals.push({name:name,target:target,saved:saved});
+  okSave('goals',goals);renderOkonomi();
+}
+function okDelGoal(i){
+  var goals=okLoad('goals',[]);
+  goals.splice(i,1);okSave('goals',goals);renderOkonomi();
+}
+function okUpdateSaved(i,delta){
+  var goals=okLoad('goals',[]);
+  goals[i].saved=Math.max(0,Math.min(goals[i].target,(goals[i].saved||0)+delta));
+  okSave('goals',goals);renderOkonomi();
+}
+
+function renderOkonomi(){
+  var rate=gs('rate',210),taxPct=gs('tax',14);
+  var extra=okLoad('extra',5000);
+  var payday=okLoad('payday',12);
+  var expenses=okLoad('expenses',OK_DEFAULTS);
+  var goals=okLoad('goals',[]);
+
+  // Lønnsdag countdown
+  var next=okNextPayday();
+  var now=new Date();
+  var diff=Math.ceil((next-now)/(1000*60*60*24));
+  var mn=['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
+  document.getElementById('ok-days').textContent=diff;
+  document.getElementById('ok-paydate').textContent=next.getDate()+'. '+mn[next.getMonth()]+' '+next.getFullYear();
+
+  // Forventet lønn denne måneden
+  var gross=mPay(CW,rate),net=gross-Math.round(gross*taxPct/100);
+  document.getElementById('ok-expected').textContent='Forventer kr '+net.toLocaleString('no-NO')+' netto';
+
+  // Månedsstatus
+  var fixedTotal=expenses.reduce(function(s,e){return s+e.amt;},0);
+  var left=net+extra-fixedTotal;
+  document.getElementById('ok-income').textContent='kr '+net.toLocaleString('no-NO');
+  document.getElementById('ok-fixed').textContent='− kr '+fixedTotal.toLocaleString('no-NO');
+  document.getElementById('ok-left').textContent=(left>=0?'':'− ')+'kr '+Math.abs(left).toLocaleString('no-NO');
+  document.getElementById('ok-left').style.color=left>=0?'var(--grn)':'var(--red)';
+  document.getElementById('ok-fixed-total').textContent='kr '+fixedTotal.toLocaleString('no-NO')+'/mnd';
+
+  // Faste utgifter liste
+  var el=document.getElementById('ok-expenses-list');el.innerHTML='';
+  expenses.forEach(function(e,i){
+    var row=document.createElement('div');row.className='ok-exp-row';
+    row.innerHTML='<span class="ok-exp-name">'+e.name+'</span>'
+      +'<span class="ok-exp-amt">kr '+e.amt.toLocaleString('no-NO')+'</span>'
+      +'<button class="ok-exp-del" onclick="okDelExpense('+i+')">✕</button>';
+    el.appendChild(row);
+  });
+
+  // Sparemål
+  var gl=document.getElementById('ok-goals-list');gl.innerHTML='';
+  if(goals.length===0){
+    gl.innerHTML='<div style="padding:16px;text-align:center;color:var(--t3);font-size:13px;">Ingen sparemål ennå</div>';
+  }
+  goals.forEach(function(g,i){
+    var pct=Math.min(100,Math.round((g.saved||0)/g.target*100));
+    var rem=g.target-(g.saved||0);
+    var moLeft=left>0?Math.ceil(rem/left):'-';
+    var div=document.createElement('div');div.className='ok-goal';
+    div.innerHTML='<div class="ok-goal-top">'
+      +'<span class="ok-goal-name">'+g.name+'</span>'
+      +'<button class="ok-goal-del" onclick="okDelGoal('+i+')">✕</button>'
+      +'</div>'
+      +'<div class="ok-progress"><div class="ok-progress-fill" style="width:'+pct+'%"></div></div>'
+      +'<div class="ok-goal-sub">'
+      +'<span>kr '+(g.saved||0).toLocaleString('no-NO')+' av kr '+g.target.toLocaleString('no-NO')+'</span>'
+      +'<span>'+pct+'% · ~'+moLeft+' mnd igjen</span>'
+      +'</div>'
+      +'<div style="display:flex;gap:8px;margin-top:10px;">'
+      +'<button class="ok-add-btn" style="font-size:12px;padding:7px" onclick="okUpdateSaved('+i+',-1000)">− 1 000</button>'
+      +'<button class="ok-add-btn" style="font-size:12px;padding:7px;background:var(--acc2);border-color:var(--acc)" onclick="okUpdateSaved('+i+',1000)">+ 1 000</button>'
+      +'</div>';
+    gl.appendChild(div);
+  });
+
+  // Init inputs
+  var pi=document.getElementById('ok-payday-input');if(pi&&!pi.value)pi.value=payday;
+  var ei=document.getElementById('ok-extra-input');if(ei&&!ei.value)ei.value=extra;
 }
 
 function renderAll(){renderTimer();renderOversikt();applySettings();}
